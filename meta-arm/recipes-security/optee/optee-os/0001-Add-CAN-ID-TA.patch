@@ -1,0 +1,133 @@
+From 5acc251a30dd5c320a93950c40f63b1360e2883d Mon Sep 17 00:00:00 2001
+Upstream-Status: Inappropriate [local custom TA]
+From: Min1222Ag <maexc834@naver.com>
+Date: Sun, 27 Apr 2025 15:06:13 +0000
+Subject: [PATCH] Add CAN ID TA
+
+---
+ ta/can_id/Makefile                 |  7 ++++
+ ta/can_id/ta.c                     | 58 ++++++++++++++++++++++++++++++
+ ta/can_id/ta.h                     |  7 ++++
+ ta/can_id/user_ta_header_defines.h | 17 +++++++++
+ 4 files changed, 89 insertions(+)
+ create mode 100644 ta/can_id/Makefile
+ create mode 100644 ta/can_id/ta.c
+ create mode 100644 ta/can_id/ta.h
+ create mode 100644 ta/can_id/user_ta_header_defines.h
+
+diff --git a/ta/can_id/Makefile b/ta/can_id/Makefile
+new file mode 100644
+index 000000000..ecf717316
+--- /dev/null
++++ b/ta/can_id/Makefile
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: BSD-2-Clause
++# (standard OP-TEE TA Makefile)
++
++TA_DEV_KIT_DIR ?= $(TA_DEV_KIT_DIR)
++
++include $(TA_DEV_KIT_DIR)/mk/ta_dev_kit.mk
++
+diff --git a/ta/can_id/ta.c b/ta/can_id/ta.c
+new file mode 100644
+index 000000000..73a1599e4
+--- /dev/null
++++ b/ta/can_id/ta.c
+@@ -0,0 +1,58 @@
++#include <tee_internal_api.h>
++#include <tee_internal_api_extensions.h>
++#include "ta.h"
++
++#define MAX_CAN_ID_BLOB_SIZE 4096
++
++static uint8_t can_id_blob[MAX_CAN_ID_BLOB_SIZE];
++static size_t can_id_blob_size = 0;
++
++TEE_Result TA_CreateEntryPoint(void)
++{
++    DMSG("TA CreateEntryPoint called");
++    return TEE_SUCCESS;
++}
++
++void TA_DestroyEntryPoint(void)
++{
++    DMSG("TA DestroyEntryPoint called");
++}
++
++TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types, TEE_Param params[4], void **session_context)
++{
++    (void)param_types;
++    (void)params;
++    (void)session_context;
++    IMSG("Session opened");
++    return TEE_SUCCESS;
++}
++
++void TA_CloseSessionEntryPoint(void *session_context)
++{
++    (void)session_context;
++    IMSG("Session closed");
++}
++
++TEE_Result TA_InvokeCommandEntryPoint(void *session_context, uint32_t cmd_id, uint32_t param_types, TEE_Param params[4])
++{
++    (void)session_context;
++
++    switch (cmd_id) {
++    case CMD_STORE_CAN_ID_BLOB:
++        if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT, TEE_PARAM_TYPE_NONE,
++                                           TEE_PARAM_TYPE_NONE, TEE_PARAM_TYPE_NONE)) {
++            return TEE_ERROR_BAD_PARAMETERS;
++        }
++        if (params[0].memref.size > MAX_CAN_ID_BLOB_SIZE)
++            return TEE_ERROR_BAD_PARAMETERS;
++
++        TEE_MemMove(can_id_blob, params[0].memref.buffer, params[0].memref.size);
++        can_id_blob_size = params[0].memref.size;
++        IMSG("Received CAN ID blob (%zu bytes)", can_id_blob_size);
++        return TEE_SUCCESS;
++
++    default:
++        return TEE_ERROR_NOT_SUPPORTED;
++    }
++}
++
+diff --git a/ta/can_id/ta.h b/ta/can_id/ta.h
+new file mode 100644
+index 000000000..8a1c71309
+--- /dev/null
++++ b/ta/can_id/ta.h
+@@ -0,0 +1,7 @@
++#ifndef TA_CAN_ID_TA_H
++#define TA_CAN_ID_TA_H
++
++#define CMD_STORE_CAN_ID_BLOB 0
++
++#endif /* TA_CAN_ID_TA_H */
++
+diff --git a/ta/can_id/user_ta_header_defines.h b/ta/can_id/user_ta_header_defines.h
+new file mode 100644
+index 000000000..15bbc7c7b
+--- /dev/null
++++ b/ta/can_id/user_ta_header_defines.h
+@@ -0,0 +1,17 @@
++#ifndef USER_TA_HEADER_DEFINES_H
++#define USER_TA_HEADER_DEFINES_H
++
++#include <uuid/uuid.h>
++
++/* Define your TA's UUID (example UUID) */
++#define TA_UUID { 0x12345678, 0x9abc, 0xdef0, \
++                  { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } }
++
++/* Flags */
++#define TA_FLAGS	(TA_FLAG_SINGLE_INSTANCE | TA_FLAG_INSTANCE_KEEP_ALIVE)
++
++#define TA_STACK_SIZE	(2 * 1024)
++#define TA_DATA_SIZE	(32 * 1024)
++
++#endif /* USER_TA_HEADER_DEFINES_H */
++
+-- 
+2.34.1
+

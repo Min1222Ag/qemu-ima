@@ -1,0 +1,38 @@
+From 8fc219b5dee05bf2328d0f0dcd85bc70ae312c0e Mon Sep 17 00:00:00 2001
+From: Min1222Ag <maexc834@naver.com>
+Date: Mon, 28 Apr 2025 12:12:08 +0900
+Subject: [PATCH] fit UUID structure
+
+Upstream-Status: Inappropriate [local can_id_ta example]
+
+---
+ can_id_ta/ta/include/can_id_ta.h      | 2 +-
+ can_id_ta/ta/user_ta_header_defines.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/can_id_ta/ta/include/can_id_ta.h b/can_id_ta/ta/include/can_id_ta.h
+index 9b7031e..2eb0c7e 100644
+--- a/can_id_ta/ta/include/can_id_ta.h
++++ b/can_id_ta/ta/include/can_id_ta.h
+@@ -2,7 +2,7 @@
+ #define CAN_ID_TA_H
+ 
+ #define TA_CAN_ID_UUID { 0x12345678, 0x1234, 0x1234, \
+-      { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc } }
++      { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0x00, 0x00 } }
+ 
+ #define CMD_STORE_CAN_ID_BLOB 0
+ 
+diff --git a/can_id_ta/ta/user_ta_header_defines.h b/can_id_ta/ta/user_ta_header_defines.h
+index a79da3b..3265cae 100644
+--- a/can_id_ta/ta/user_ta_header_defines.h
++++ b/can_id_ta/ta/user_ta_header_defines.h
+@@ -2,7 +2,7 @@
+ #define USER_TA_HEADER_DEFINES_H
+ 
+ #define TA_UUID { 0x12345678, 0x1234, 0x1234, \
+-                  { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc} }
++                  { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0x00, 0x00} }
+ 
+ 
+ #define TA_FLAGS            (TA_FLAG_SINGLE_INSTANCE | TA_FLAG_MULTI_SESSION)

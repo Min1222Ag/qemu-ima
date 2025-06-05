@@ -1,0 +1,156 @@
+From 72d80256c49156a18bb4186407fd873af442bdd1 Mon Sep 17 00:00:00 2001
+From: Min1222Ag <maexc834@naver.com>
+Date: Mon, 28 Apr 2025 11:04:38 +0900
+Subject: [PATCH] Add can_id_ta example
+
+Upstream-Status: Inappropriate [local can_id_ta example]
+
+---
+ can_id_ta/ta/Makefile                 |  4 ++
+ can_id_ta/ta/can_id_ta.c              | 79 +++++++++++++++++++++++++++
+ can_id_ta/ta/include/can_id_ta.h      |  7 +++
+ can_id_ta/ta/sub.mk                   |  2 +
+ can_id_ta/ta/user_ta_header_defines.h | 14 +++++
+ 5 files changed, 106 insertions(+)
+ create mode 100644 can_id_ta/ta/Makefile
+ create mode 100644 can_id_ta/ta/can_id_ta.c
+ create mode 100644 can_id_ta/ta/include/can_id_ta.h
+ create mode 100644 can_id_ta/ta/sub.mk
+ create mode 100644 can_id_ta/ta/user_ta_header_defines.h
+
+diff --git a/can_id_ta/ta/Makefile b/can_id_ta/ta/Makefile
+new file mode 100644
+index 0000000..bfa8985
+--- /dev/null
++++ b/can_id_ta/ta/Makefile
+@@ -0,0 +1,4 @@
++BINARY = 12345678-1234-1234-1234-123456789abcdef0
++
++include $(TA_DEV_KIT_DIR)/mk/ta_dev_kit.mk
++
+diff --git a/can_id_ta/ta/can_id_ta.c b/can_id_ta/ta/can_id_ta.c
+new file mode 100644
+index 0000000..2d248b6
+--- /dev/null
++++ b/can_id_ta/ta/can_id_ta.c
+@@ -0,0 +1,79 @@
++#include <tee_internal_api.h>
++#include <tee_internal_api_extensions.h>
++#include <string.h>
++#include "can_id_ta.h"
++
++static void *g_can_id_blob = NULL;
++static size_t g_can_id_blob_size = 0;
++
++TEE_Result TA_CreateEntryPoint(void)
++{
++    DMSG("TA CreateEntryPoint has been called");
++    return TEE_SUCCESS;
++}
++
++void TA_DestroyEntryPoint(void)
++{
++    DMSG("TA DestroyEntryPoint has been called");
++    if (g_can_id_blob) {
++        TEE_Free(g_can_id_blob);
++        g_can_id_blob = NULL;
++        g_can_id_blob_size = 0;
++    }
++}
++
++TEE_Result TA_OpenSessionEntryPoint(uint32_t param_types,
++                TEE_Param __maybe_unused params[4],
++                void **session_context)
++{
++    (void)param_types;
++    (void)params;
++    (void)session_context;
++
++    IMSG("Session has been opened");
++    return TEE_SUCCESS;
++}
++
++void TA_CloseSessionEntryPoint(void *session_context)
++{
++    (void)session_context;
++    IMSG("Session has been closed");
++}
++
++TEE_Result TA_InvokeCommandEntryPoint(void *session_context,
++                uint32_t cmd_id,
++                uint32_t param_types,
++                TEE_Param params[4])
++{
++    (void)session_context;
++
++    switch (cmd_id) {
++    case CMD_STORE_CAN_ID_BLOB:
++        if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_MEMREF_INPUT,
++                                           TEE_PARAM_TYPE_NONE,
++                                           TEE_PARAM_TYPE_NONE,
++                                           TEE_PARAM_TYPE_NONE)) {
++            return TEE_ERROR_BAD_PARAMETERS;
++        }
++
++        if (g_can_id_blob) {
++            TEE_Free(g_can_id_blob);
++            g_can_id_blob = NULL;
++            g_can_id_blob_size = 0;
++        }
++
++        g_can_id_blob = TEE_Malloc(params[0].memref.size, 0);
++        if (!g_can_id_blob)
++            return TEE_ERROR_OUT_OF_MEMORY;
++
++        TEE_MemMove(g_can_id_blob, params[0].memref.buffer, params[0].memref.size);
++        g_can_id_blob_size = params[0].memref.size;
++
++        IMSG("Received CAN ID blob (%lu bytes)", g_can_id_blob_size);
++        return TEE_SUCCESS;
++
++    default:
++        return TEE_ERROR_NOT_SUPPORTED;
++    }
++}
++
+diff --git a/can_id_ta/ta/include/can_id_ta.h b/can_id_ta/ta/include/can_id_ta.h
+new file mode 100644
+index 0000000..0aacb00
+--- /dev/null
++++ b/can_id_ta/ta/include/can_id_ta.h
+@@ -0,0 +1,7 @@
++#ifndef CAN_ID_TA_H
++#define CAN_ID_TA_H
++
++#define CMD_STORE_CAN_ID_BLOB 0
++
++#endif /* CAN_ID_TA_H */
++
+diff --git a/can_id_ta/ta/sub.mk b/can_id_ta/ta/sub.mk
+new file mode 100644
+index 0000000..8615f05
+--- /dev/null
++++ b/can_id_ta/ta/sub.mk
+@@ -0,0 +1,2 @@
++srcs-y += can_id_ta.c
++
+diff --git a/can_id_ta/ta/user_ta_header_defines.h b/can_id_ta/ta/user_ta_header_defines.h
+new file mode 100644
+index 0000000..f59d845
+--- /dev/null
++++ b/can_id_ta/ta/user_ta_header_defines.h
+@@ -0,0 +1,14 @@
++#ifndef USER_TA_HEADER_DEFINES_H
++#define USER_TA_HEADER_DEFINES_H
++
++#include <uuid/uuid.h> // 필요 없으면 빼도 됨
++
++#define TA_UUID { 0x12345678, 0x1234, 0x1234, \
++                  { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } }
++
++#define TA_FLAGS            (TA_FLAG_SINGLE_INSTANCE | TA_FLAG_MULTI_SESSION)
++#define TA_STACK_SIZE       (2 * 1024)
++#define TA_DATA_SIZE        (32 * 1024)
++
++#endif /* USER_TA_HEADER_DEFINES_H */
++
