@@ -5,7 +5,7 @@
 
 ## Steps
 1. Clone meta-arm repository:
-   git clone https://github.com/Min1222Ag/qemu-ima
+   git clone [https://github.com/Min1222Ag/qemu-ima](https://github.com/Min1222Ag/qemu-ima.git)
 
 2. Copy patch:
    cp 0001-*.patch meta-arm/meta-arm/recipes-kernel/linux/files/
