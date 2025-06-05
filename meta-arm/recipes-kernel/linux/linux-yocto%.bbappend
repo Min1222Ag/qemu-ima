@@ -32,6 +32,9 @@ require ${@bb.utils.contains('MACHINE_FEATURES', 'uefi-secureboot', 'linux-yocto
 FILESEXTRAPATHS:prepend := "${THISDIR}/linux-yocto:"
 SRC_URI += "file://signing_key.pem"
 
+# for IMA + TEE patching
+SRC_URI += "file://tee_ima_execinfo.patch"
+
 do_configure:append() {
     install -m 0600 ${WORKDIR}/signing_key.pem ${S}/certs/signing_key.pem
 }
