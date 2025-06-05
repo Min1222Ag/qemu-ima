@@ -27,3 +27,11 @@ FFA_TRANSPORT_INCLUDE = "${@bb.utils.contains('MACHINE_FEATURES', 'arm-ffa', 'ar
 require ${FFA_TRANSPORT_INCLUDE}
 
 require ${@bb.utils.contains('MACHINE_FEATURES', 'uefi-secureboot', 'linux-yocto-uefi-secureboot.inc', '', d)}
+
+# certs/signing_key.pem 복사 설정
+FILESEXTRAPATHS:prepend := "${THISDIR}/linux-yocto:"
+SRC_URI += "file://signing_key.pem"
+
+do_configure:append() {
+    install -m 0600 ${WORKDIR}/signing_key.pem ${S}/certs/signing_key.pem
+}

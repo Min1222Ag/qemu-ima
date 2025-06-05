@@ -6,8 +6,8 @@ header:
     - ci/base.yml
     - ci/fvp.yml
 
-machine: fvp-base
-
+#machine: fvp-base
+machine: qemuarm64
 target:
   - core-image-full-cmdline
   - boot-wrapper-aarch64
